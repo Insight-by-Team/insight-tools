@@ -67,13 +67,13 @@ class HParamsAssistant:
         if self.str_to_type is None:
             if model is not None:
                 # take imported modules in model file
-                module = inspect.getmodule(model)
+                module = self.str_to_type_from_model_imports(model)
                 self.str_to_type = module.__dict__
                 logger.info(f'String to type map taken from imports of module '
                             f'{module.__name__}')
             else:
                 # take imported modules in calling function
-                module = inspect.getmodule(inspect.stack()[1][0])
+                module = self.str_to_type_from_callee_imports(2)
                 self.str_to_type = module.__dict__
                 logger.info(f'String to type map taken from imports of module '
                             f'of calling function {module.__name__}')
@@ -184,3 +184,11 @@ class HParamsAssistant:
                         dependency_graph[parameter_name].add(value[1:])
 
         return chain.from_iterable(toposort(dependency_graph))
+
+    @staticmethod
+    def str_to_type_from_model_imports(model):
+        return inspect.getmodule(model)
+
+    @staticmethod
+    def str_to_type_from_callee_imports(stack_depth: int = 1):
+        return inspect.getmodule(inspect.stack()[stack_depth][0])
