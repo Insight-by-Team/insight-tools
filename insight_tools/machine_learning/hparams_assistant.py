@@ -1,5 +1,4 @@
 from typing import Union as U, Optional as Opt, Callable, Any, Dict
-from types import ModuleType
 from collections import defaultdict
 from functools import partial
 from itertools import chain
@@ -28,13 +27,13 @@ class HParamsAssistant:
 
     def __init__(
             self,
-            module_with_imports: Opt[ModuleType] = None,
+            str_to_type: Opt[Dict[str, type]] = None,
             save_all_params_to_model: bool = False,
             raise_import_error: bool = True,
             raise_unknown_named_object: bool = True,
             return_partial: bool = True):
 
-        self.module_with_imports = module_with_imports
+        self.str_to_type = str_to_type
         self.save_all_params_to_model = save_all_params_to_model
         self.raise_import_error = raise_import_error
         self.raise_unknown_named_object = raise_unknown_named_object
@@ -65,14 +64,19 @@ class HParamsAssistant:
         if isinstance(hparams, Namespace):
             hparams = hparams.__dict__
 
-        if self.module_with_imports is None:
+        if self.str_to_type is None:
             if model is not None:
                 # take imported modules in model file
-                self.module_with_imports = inspect.getmodule(model)
+                module = inspect.getmodule(model)
+                self.str_to_type = module.__dict__
+                logger.info(f'String to type map taken from imports of module '
+                            f'{module.__name__}')
             else:
                 # take imported modules in calling function
-                frm = inspect.stack()[1]
-                self.module_with_imports = inspect.getmodule(frm[0])
+                module = inspect.getmodule(inspect.stack()[1][0])
+                self.str_to_type = module.__dict__
+                logger.info(f'String to type map taken from imports of module '
+                            f'of calling function {module.__name__}')
 
         for param_name, packed_object in hparams.items():
             obj = self.get_object(setted_params, param_name, packed_object)
@@ -99,7 +103,7 @@ class HParamsAssistant:
             cls_name = self.class_nicknames[cls_name]
 
         try:
-            cls = getattr(self.module_with_imports, cls_name)
+            cls = self.str_to_type[cls_name]
             return cls(*args, **kwargs)
         except TypeError as e:
             if self.return_partial:
@@ -108,8 +112,7 @@ class HParamsAssistant:
         except AttributeError:
             if self.raise_import_error:
                 raise ImportError(name=cls_name)
-            logger.warning(f"Can't find class {cls_name} in module "
-                           f"{self.module_with_imports.__name__}")
+            logger.warning(f"Can't find class {cls_name} in str_to_class dict")
         return None
 
     def get_named_object(self, param_name: str, factory_name: str):
