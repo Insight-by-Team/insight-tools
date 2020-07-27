@@ -93,6 +93,9 @@ class HParamsAssistant:
         return setted_params
 
     def unpack_object(self, object_dict: dict):
+        if self.str_to_type is None:
+            raise ValueError('Objects cannot be unpacked without mapping from '
+                             'string to its type')
         kwargs = object_dict.copy()
         cls_name = kwargs.pop('__class__')
         if 'args' in kwargs:
