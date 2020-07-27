@@ -98,8 +98,8 @@ class HParamsAssistant:
                              'string to its type')
         kwargs = object_dict.copy()
         cls_name = kwargs.pop('__class__')
-        if 'args' in kwargs:
-            args = kwargs.pop('args')
+        if '*args' in kwargs:
+            args = kwargs.pop('*args')
         else:
             args = []
         if cls_name in self.class_nicknames:
@@ -165,7 +165,7 @@ class HParamsAssistant:
                                     packed_object: dict):
         res = packed_object.copy()
         for attr, value in res.items():
-            if attr == 'args':
+            if attr == '*args':
                 args = value
                 for i, v in enumerate(args):
                     if HParamsAssistant.value_is_another_hparam(v):

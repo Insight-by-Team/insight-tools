@@ -10,7 +10,7 @@ def test_hparams_assistant():
         'kernel_size': 3,
         'wavenumbers': {
             '__class__': 'linspace',
-            'args': [500, 3500, 1408]
+            '*args': [500, 3500, 1408]
         },
     }
 
